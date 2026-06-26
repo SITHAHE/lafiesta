@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { asset } from './ui';
 
-// Фоновый диско-шар для Hero. На десктопе вращение привязано к скроллу
-// (как на сайтах Apple): позиция кадра = прогресс прокрутки героя.
-// На тач-устройствах (надёжная перемотка недоступна) — плавный авто-луп.
+// Фоновый диско-шар для Hero. Вращение привязано к скроллу (как на сайтах Apple):
+// позиция кадра = прогресс прокрутки героя. Работает и на тач-устройствах (iPad) —
+// для этого декодер «праймится» коротким play→pause, иначе iOS не рендерит перемотку.
 // При prefers-reduced-motion — статичный постер.
 export default function DiscoVideo() {
   const videoRef = useRef(null);
@@ -16,16 +16,31 @@ export default function DiscoVideo() {
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduce) return; // только постер
 
-    const coarse = window.matchMedia('(pointer: coarse)').matches;
-    if (coarse) {
-      video.loop = true;
-      const play = () => video.play().catch(() => {});
-      if (video.readyState >= 2) play();
-      else video.addEventListener('canplay', play, { once: true });
-      return () => video.removeEventListener('canplay', play);
-    }
+    // «Прайм»: разогреваем декодер, чтобы перемотка по скроллу рендерилась
+    // и на тач/iOS (iPad). Паузу ставим по первому кадру + страховочный таймер,
+    // чтобы шар не «самовращался» до скролла.
+    let primed = false;
+    let primeTimer = 0;
+    const finishPrime = () => {
+      if (primed) return;
+      primed = true;
+      clearTimeout(primeTimer);
+      video.pause();
+      try { video.currentTime = 0; } catch (e) { /* noop */ }
+    };
+    video
+      .play()
+      .then(() => {
+        if (typeof video.requestVideoFrameCallback === 'function') {
+          video.requestVideoFrameCallback(() => finishPrime());
+        } else {
+          finishPrime();
+        }
+      })
+      .catch(() => finishPrime());
+    primeTimer = setTimeout(finishPrime, 350);
 
-    // --- Desktop: скраб по скроллу ---
+    // --- Скраб по скроллу ---
     const section = video.closest('section');
     let duration = 0;
     let ready = false;
@@ -80,6 +95,7 @@ export default function DiscoVideo() {
 
     return () => {
       cancelAnimationFrame(raf);
+      clearTimeout(primeTimer);
       window.removeEventListener('scroll', kick);
       window.removeEventListener('resize', kick);
       video.removeEventListener('loadedmetadata', onMeta);
