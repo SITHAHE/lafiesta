@@ -145,9 +145,12 @@ export default function MobileIntro() {
     };
   }, []);
 
+  // h-[100svh]: высота по «малому» вьюпорту (с раскрытыми панелями Safari).
+  // svh статичен и НЕ меняется при сворачивании адресной строки на скролле,
+  // поэтому шар и надпись не прыгают между состояниями панелей (vs inset-0/100vh).
   return (
     <section
-      className="fixed inset-0 z-0 overflow-hidden bg-ink bg-aurora lg:hidden"
+      className="fixed inset-x-0 top-0 h-[100svh] z-0 overflow-hidden bg-ink bg-aurora lg:hidden"
       aria-hidden="true"
     >
       <span className="intro-ball-glow" />
