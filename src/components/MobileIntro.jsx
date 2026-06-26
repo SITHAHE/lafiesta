@@ -35,8 +35,18 @@ export default function MobileIntro() {
     let target = 0;
     let raf = 0;
     let idle = 0;
+    // Высоту вьюпорта кэшируем и обновляем ТОЛЬКО по resize.
+    // На iOS innerHeight «дышит» при сворачивании адресной строки во время скролла —
+    // если читать его на каждый scroll, надпись дёргается. Кэш убирает дрожь.
+    let vh = window.innerHeight || 1;
+    let cOpacity = 1; // сглаженная (покадровая) прозрачность надписи
 
     const TURNS = 1.15;
+
+    if (content) {
+      // Композитим на GPU — затухание и увод вверх без релейаута
+      content.style.willChange = 'opacity, transform';
+    }
 
     const onMeta = () => {
       duration = video.duration || 0;
@@ -46,28 +56,51 @@ export default function MobileIntro() {
     else video.addEventListener('loadedmetadata', onMeta);
 
     const update = () => {
-      const vh = window.innerHeight || 1;
-      if (content) {
-        content.style.opacity = String(Math.max(0, 1 - window.scrollY / (vh * 0.55)));
-      }
       if (ready && !reduce) {
         // Растягиваем оборот на ~1.5 высоты экрана — медленнее и премиальнее
         target = Math.min(1, Math.max(0, window.scrollY / (vh * 1.5))) * duration * TURNS;
       }
+      // Reduced motion: без анимаций и rAF — затухаем мгновенно по скроллу
+      if (reduce && content) {
+        content.style.opacity = String(Math.max(0, 1 - window.scrollY / (vh * 0.55)));
+      }
+    };
+
+    // Затухание надписи считаем покадрово в rAF (а не по событиям scroll,
+    // которые iOS прореживает при инерции) → плавно, без ступенек.
+    const fadeContent = () => {
+      if (!content) return true;
+      const targetOpacity = Math.max(0, Math.min(1, 1 - window.scrollY / (vh * 0.5)));
+      cOpacity += (targetOpacity - cOpacity) * 0.14;
+      const settled = Math.abs(targetOpacity - cOpacity) < 0.002;
+      if (settled) cOpacity = targetOpacity;
+      content.style.opacity = cOpacity.toFixed(3);
+      // Осознанный увод вверх по мере затухания — движение читается как намеренное,
+      // а микро-дрейф адресной строки на его фоне незаметен.
+      const up = (1 - cOpacity) * 34;
+      content.style.transform = `translate3d(0, ${(-up).toFixed(1)}px, 0)`;
+      return settled;
     };
 
     const loop = () => {
-      if (!ready || reduce) {
+      if (reduce) {
         raf = 0;
         return;
       }
-      // Мягче инерция (меньше коэффициент → плавнее «доводка», без рывков)
-      current += (target - current) * 0.085;
-      if (!video.seeking) {
-        const t = ((current % duration) + duration) % duration;
-        if (Math.abs(t - video.currentTime) > 1 / 60) video.currentTime = t;
+      const contentSettled = fadeContent();
+
+      let ballSettled = true;
+      if (ready) {
+        // Мягче инерция (меньше коэффициент → плавнее «доводка», без рывков)
+        current += (target - current) * 0.085;
+        if (!video.seeking) {
+          const t = ((current % duration) + duration) % duration;
+          if (Math.abs(t - video.currentTime) > 1 / 60) video.currentTime = t;
+        }
+        ballSettled = Math.abs(target - current) < 0.002;
       }
-      if (Math.abs(target - current) < 0.002) {
+
+      if (ballSettled && contentSettled) {
         if (++idle > 12) {
           raf = 0;
           return;
@@ -84,14 +117,21 @@ export default function MobileIntro() {
       if (!raf && !reduce) raf = requestAnimationFrame(loop);
     };
 
+    const onResize = () => {
+      vh = window.innerHeight || 1;
+      update();
+      idle = 0;
+      if (!raf && !reduce) raf = requestAnimationFrame(loop);
+    };
+
     update();
     window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
+    window.addEventListener('resize', onResize);
 
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onScroll);
+      window.removeEventListener('resize', onResize);
       video.removeEventListener('loadedmetadata', onMeta);
     };
   }, []);
