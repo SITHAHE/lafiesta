@@ -43,7 +43,15 @@ export default function MobileIntro() {
 
     const TURNS = 1.15;
 
-    if (content) {
+    // Если браузер умеет scroll-driven анимации — затуханием надписи рулит CSS
+    // (.intro-content в index.css) на композиторном потоке. JS его НЕ трогает,
+    // иначе перетрёт и снова посадит на main-thread/видео-jank.
+    const cssScroll =
+      typeof CSS !== 'undefined' &&
+      CSS.supports &&
+      CSS.supports('animation-timeline: scroll()');
+
+    if (content && !cssScroll) {
       // Композитим на GPU — затухание и увод вверх без релейаута
       content.style.willChange = 'opacity, transform';
     }
@@ -60,16 +68,17 @@ export default function MobileIntro() {
         // Растягиваем оборот на ~1.5 высоты экрана — медленнее и премиальнее
         target = Math.min(1, Math.max(0, window.scrollY / (vh * 1.5))) * duration * TURNS;
       }
-      // Reduced motion: без анимаций и rAF — затухаем мгновенно по скроллу
-      if (reduce && content) {
+      // Reduced motion (и нет CSS scroll-anim): затухаем мгновенно по скроллу
+      if (reduce && content && !cssScroll) {
         content.style.opacity = String(Math.max(0, 1 - window.scrollY / (vh * 0.55)));
       }
     };
 
     // Затухание надписи считаем покадрово в rAF (а не по событиям scroll,
     // которые iOS прореживает при инерции) → плавно, без ступенек.
+    // Используется только как фолбэк, когда CSS scroll-driven недоступен.
     const fadeContent = () => {
-      if (!content) return true;
+      if (!content || cssScroll) return true;
       const targetOpacity = Math.max(0, Math.min(1, 1 - window.scrollY / (vh * 0.5)));
       cOpacity += (targetOpacity - cOpacity) * 0.14;
       const settled = Math.abs(targetOpacity - cOpacity) < 0.002;
@@ -156,7 +165,7 @@ export default function MobileIntro() {
 
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-ink via-ink/85 to-transparent" />
 
-      <div ref={contentRef} className="absolute inset-0">
+      <div ref={contentRef} className="intro-content absolute inset-0">
         <div className="absolute inset-x-0 bottom-28 px-8 text-center">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-grape-300/25 bg-white/5 px-3 py-1.5">
             <span className="flex text-champagne">

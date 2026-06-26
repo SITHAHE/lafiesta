@@ -347,6 +347,31 @@ body {
   mask: radial-gradient(circle closest-side, #000 66%, rgba(0, 0, 0, 0.6) 69%, transparent 71%);
   animation: float 9s ease-in-out infinite;
 }
+/* Затухание надписи Hero на мобиле, привязанное к скроллу.
+   Где поддерживаются scroll-driven анимации (iOS 26+, совр. Chrome) — анимация
+   крутится на КОМПОЗИТОРНОМ потоке, независимо от main-thread и тяжёлой
+   перемотки видео-шара → идеально плавно (60 fps), как нативный скролл.
+   Старые браузеры используют JS-фолбэк из MobileIntro.jsx. */
+@keyframes introTextFade {
+  to {
+    opacity: 0;
+    transform: translate3d(0, -34px, 0);
+  }
+}
+@supports (animation-timeline: scroll()) {
+  .intro-content {
+    will-change: opacity, transform;
+    animation: introTextFade linear both;
+    animation-timeline: scroll(root block);
+    animation-range: 0 50vh;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .intro-content {
+      animation-range: 0 35vh;
+    }
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .intro-ball,
   .intro-ball-glow {
