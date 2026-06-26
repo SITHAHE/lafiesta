@@ -1,0 +1,369 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  @apply bg-ink text-grape-50 font-sans antialiased;
+  overflow-x: hidden;
+}
+
+/* selection */
+::selection {
+  background: rgba(209, 107, 240, 0.35);
+  color: #fff;
+}
+
+/* custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0614;
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(#7a2bb8, #3d1466);
+  border-radius: 999px;
+}
+
+@layer components {
+  .container-x {
+    @apply mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-10;
+  }
+
+  .glass {
+    background: linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.07),
+      rgba(255, 255, 255, 0.02)
+    );
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(220, 192, 244, 0.14);
+  }
+
+  .eyebrow {
+    @apply inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.28em] text-grape-300;
+  }
+
+  .btn-primary {
+    @apply relative inline-flex cursor-pointer items-center justify-center gap-2 rounded-full px-7 py-3.5 text-sm font-bold tracking-wide text-white transition-all duration-300;
+    background: linear-gradient(110deg, #9b3fd4, #d16bf0 55%, #e26fe0);
+    box-shadow: 0 10px 30px -8px rgba(209, 107, 240, 0.6);
+  }
+  .btn-primary:hover {
+    box-shadow: 0 14px 44px -8px rgba(209, 107, 240, 0.85);
+    filter: brightness(1.06);
+  }
+
+  .btn-ghost {
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-grape-300/30 bg-white/5 px-7 py-3.5 text-sm font-semibold text-grape-50 transition-all duration-300 hover:border-grape-300/60 hover:bg-white/10;
+  }
+
+  .text-gradient {
+    background: linear-gradient(110deg, #f7eefe 10%, #d16bf0 45%, #b36fe0 70%, #f0d9a8);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
+
+/* ============================================================
+   DISCO BALL — анимированный диско-шар (Hero)
+   Чистый CSS: сфера из зеркальных граней + объёмная тень +
+   вращающийся блик + искры. Адаптивен (size через --db).
+   ============================================================ */
+.disco {
+  --db: clamp(220px, 42vw, 460px);
+  position: relative;
+  width: var(--db);
+  height: var(--db);
+  display: grid;
+  place-items: center;
+  isolation: isolate;
+}
+
+/* лучи света за шаром */
+.disco__rays {
+  position: absolute;
+  inset: -38%;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(209, 107, 240, 0.16) 12deg,
+    transparent 24deg,
+    rgba(155, 63, 212, 0.14) 40deg,
+    transparent 60deg,
+    rgba(226, 111, 224, 0.18) 80deg,
+    transparent 96deg,
+    rgba(201, 160, 232, 0.12) 130deg,
+    transparent 160deg,
+    rgba(209, 107, 240, 0.16) 200deg,
+    transparent 230deg,
+    rgba(155, 63, 212, 0.16) 280deg,
+    transparent 310deg,
+    rgba(226, 111, 224, 0.14) 340deg,
+    transparent 360deg
+  );
+  filter: blur(6px);
+  animation: spin-slow 38s linear infinite;
+  z-index: -2;
+}
+
+/* мягкое свечение-ореол */
+.disco__halo {
+  position: absolute;
+  inset: 2%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 50% 45%,
+    rgba(226, 111, 224, 0.45),
+    rgba(122, 43, 184, 0.18) 55%,
+    transparent 72%
+  );
+  filter: blur(26px);
+  z-index: -1;
+  animation: float 7s ease-in-out infinite;
+}
+
+.disco__ball {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  animation: float 7s ease-in-out infinite;
+  box-shadow:
+    inset -18px -22px 50px rgba(0, 0, 0, 0.75),
+    inset 22px 20px 46px rgba(247, 238, 254, 0.28),
+    0 30px 60px -18px rgba(0, 0, 0, 0.8);
+  background:
+    radial-gradient(circle at 34% 30%, rgba(255, 255, 255, 0.55), transparent 30%),
+    radial-gradient(circle at 50% 50%, #c9a0e8 0%, #9b3fd4 38%, #4a1c7e 70%, #1c0b33 100%);
+}
+
+/* сетка зеркальных граней */
+.disco__facets {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.32) 0 1px,
+      transparent 1px calc(var(--db) / 16)
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.32) 0 1px,
+      transparent 1px calc(var(--db) / 16)
+    );
+  mix-blend-mode: overlay;
+}
+
+/* цветной перелив граней */
+.disco__tint {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    rgba(226, 111, 224, 0.5),
+    rgba(122, 43, 184, 0.15),
+    rgba(240, 217, 168, 0.4),
+    rgba(155, 63, 212, 0.2),
+    rgba(226, 111, 224, 0.5)
+  );
+  mix-blend-mode: color-dodge;
+  opacity: 0.5;
+  animation: spin-slow 18s linear infinite;
+}
+
+/* вращающийся блик-засветка */
+.disco__shine {
+  position: absolute;
+  inset: -25%;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(255, 255, 255, 0.0) 30deg,
+    rgba(255, 255, 255, 0.55) 60deg,
+    rgba(255, 255, 255, 0.0) 90deg,
+    transparent 180deg,
+    rgba(255, 255, 255, 0.32) 230deg,
+    transparent 270deg
+  );
+  mix-blend-mode: screen;
+  animation: spin-slow 9s linear infinite;
+}
+
+/* верхний глянцевый блик */
+.disco__gloss {
+  position: absolute;
+  width: 32%;
+  height: 24%;
+  left: 22%;
+  top: 14%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.85), transparent 70%);
+  filter: blur(3px);
+}
+
+/* подвес */
+.disco__pin {
+  position: absolute;
+  top: calc(-1 * var(--db) * 0.06);
+  left: 50%;
+  width: 10px;
+  height: calc(var(--db) * 0.08);
+  transform: translateX(-50%);
+  background: linear-gradient(#dbdbe6, #7a2bb8);
+  border-radius: 3px;
+  z-index: 2;
+}
+
+/* искры вокруг шара */
+.spark {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff, rgba(226, 111, 224, 0.9) 45%, transparent 70%);
+  box-shadow: 0 0 10px 2px rgba(226, 111, 224, 0.7);
+  animation: twinkle 3.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .disco__rays,
+  .disco__halo,
+  .disco__ball,
+  .disco__tint,
+  .disco__shine,
+  .spark,
+  .animate-float,
+  .animate-marquee,
+  .animate-spin-slow,
+  .animate-spin-slower,
+  .animate-twinkle {
+    animation: none !important;
+  }
+}
+
+/* ============================================================
+   DISCO VIDEO — видео-диско-шар (Hero), вращение по скроллу.
+   Чёрный фон видео убирается через mix-blend-mode: screen.
+   ============================================================ */
+.disco-bg {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+.disco-bg__glow {
+  position: absolute;
+  top: 50%;
+  left: 62%;
+  width: clamp(480px, 60vw, 860px);
+  height: clamp(480px, 60vw, 860px);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(209, 107, 240, 0.42),
+    rgba(122, 43, 184, 0.16) 48%,
+    transparent 66%
+  );
+  filter: blur(44px);
+  animation: float 9s ease-in-out infinite;
+}
+.disco-bg__el {
+  position: absolute;
+  top: 50%;
+  left: 62%;
+  width: clamp(460px, 58vw, 820px);
+  height: clamp(460px, 58vw, 820px);
+  transform: translate(-50%, -50%);
+  object-fit: contain;
+  mix-blend-mode: screen;
+  /* ВЫРЕЗАЕМ ШАР ЧИСТЫМ КРУГОМ: радиус чуть меньше шара, чтобы
+     спрятать плоские края исходника. Лёгкое перо + свечение сзади. */
+  -webkit-mask: radial-gradient(circle closest-side, #000 66%, rgba(0,0,0,0.6) 69%, transparent 71%);
+  mask: radial-gradient(circle closest-side, #000 66%, rgba(0,0,0,0.6) 69%, transparent 71%);
+  animation: float 9s ease-in-out infinite;
+  will-change: transform;
+}
+@media (max-width: 1024px) {
+  /* на мобильных шар показывает интро-экран (MobileIntro), в Hero он не нужен */
+  .disco-bg {
+    display: none;
+  }
+}
+
+/* мобильный интро-шар */
+.intro-ball-glow {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  width: min(94vw, 520px);
+  height: min(94vw, 520px);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(209, 107, 240, 0.42),
+    rgba(122, 43, 184, 0.16) 48%,
+    transparent 66%
+  );
+  filter: blur(44px);
+  animation: float 9s ease-in-out infinite;
+}
+.intro-ball {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  width: min(86vw, 460px);
+  height: min(86vw, 460px);
+  transform: translate(-50%, -50%);
+  object-fit: contain;
+  mix-blend-mode: screen;
+  -webkit-mask: radial-gradient(circle closest-side, #000 66%, rgba(0, 0, 0, 0.6) 69%, transparent 71%);
+  mask: radial-gradient(circle closest-side, #000 66%, rgba(0, 0, 0, 0.6) 69%, transparent 71%);
+  animation: float 9s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .intro-ball,
+  .intro-ball-glow {
+    animation: none !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .disco-bg__glow,
+  .disco-bg__el {
+    animation: none !important;
+  }
+}
+
+/* зернистость/виньетка фона */
+.bg-aurora {
+  background:
+    radial-gradient(60% 50% at 80% 0%, rgba(122, 43, 184, 0.35), transparent 70%),
+    radial-gradient(50% 50% at 10% 20%, rgba(209, 107, 240, 0.22), transparent 70%),
+    radial-gradient(60% 60% at 50% 100%, rgba(61, 20, 102, 0.4), transparent 70%);
+}
