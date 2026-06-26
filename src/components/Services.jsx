@@ -54,6 +54,7 @@ export default function Services() {
                   <Img
                     src={s.img}
                     alt={s.title}
+                    style={s.imgPos ? { objectPosition: s.imgPos } : undefined}
                     className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-ink-soft via-ink-soft/30 to-transparent" />

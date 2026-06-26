@@ -36,7 +36,7 @@ export default function MobileIntro() {
     let raf = 0;
     let idle = 0;
 
-    const TURNS = 1.5;
+    const TURNS = 1.15;
 
     const onMeta = () => {
       duration = video.duration || 0;
@@ -51,7 +51,8 @@ export default function MobileIntro() {
         content.style.opacity = String(Math.max(0, 1 - window.scrollY / (vh * 0.55)));
       }
       if (ready && !reduce) {
-        target = Math.min(1, Math.max(0, window.scrollY / (vh * 0.9))) * duration * TURNS;
+        // Растягиваем оборот на ~1.5 высоты экрана — медленнее и премиальнее
+        target = Math.min(1, Math.max(0, window.scrollY / (vh * 1.5))) * duration * TURNS;
       }
     };
 
@@ -60,13 +61,14 @@ export default function MobileIntro() {
         raf = 0;
         return;
       }
-      current += (target - current) * 0.16;
+      // Мягче инерция (меньше коэффициент → плавнее «доводка», без рывков)
+      current += (target - current) * 0.085;
       if (!video.seeking) {
         const t = ((current % duration) + duration) % duration;
-        if (Math.abs(t - video.currentTime) > 1 / 50) video.currentTime = t;
+        if (Math.abs(t - video.currentTime) > 1 / 60) video.currentTime = t;
       }
       if (Math.abs(target - current) < 0.002) {
-        if (++idle > 8) {
+        if (++idle > 12) {
           raf = 0;
           return;
         }
