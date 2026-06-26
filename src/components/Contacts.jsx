@@ -27,7 +27,7 @@ export default function Contacts() {
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-grape-100/80">
             Запишитесь онлайн за минуту — выберите удобное время в Telegram или напишите нам.
-            Мы ответим в среднем за 15 минут.
+            Мы ответим за 15 минут.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <a href={bookingUrl} target="_blank" rel="noopener noreferrer" className="btn-primary w-full sm:w-auto">
