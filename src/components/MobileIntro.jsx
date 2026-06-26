@@ -18,15 +18,32 @@ export default function MobileIntro() {
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     // «Прайм»: коротко запускаем и ставим на паузу, чтобы браузер (в т.ч. iOS)
-    // рендерил кадры при последующей перемотке по скроллу.
+    // декодировал кадры для последующей перемотки по скроллу.
+    // Паузу ставим по ПЕРВОМУ отрисованному кадру (requestVideoFrameCallback),
+    // чтобы шар не успевал заметно прокрутиться, + страховочный таймер на случай,
+    // если промис play() завис/отклонился — иначе шар «самовращается» до скролла.
+    let primed = false;
+    let primeTimer = 0;
+    const finishPrime = () => {
+      if (primed) return;
+      primed = true;
+      clearTimeout(primeTimer);
+      video.pause();
+      try { video.currentTime = 0; } catch (e) { /* noop */ }
+    };
     if (!reduce) {
       video
         .play()
         .then(() => {
-          video.pause();
-          try { video.currentTime = 0; } catch (e) { /* noop */ }
+          if (typeof video.requestVideoFrameCallback === 'function') {
+            video.requestVideoFrameCallback(() => finishPrime());
+          } else {
+            finishPrime();
+          }
         })
-        .catch(() => {});
+        .catch(() => finishPrime());
+      // Гарантированно гасим прайм, даже если колбэки не сработали
+      primeTimer = setTimeout(finishPrime, 350);
     }
 
     let duration = 0;
@@ -139,6 +156,7 @@ export default function MobileIntro() {
 
     return () => {
       cancelAnimationFrame(raf);
+      clearTimeout(primeTimer);
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onResize);
       video.removeEventListener('loadedmetadata', onMeta);
