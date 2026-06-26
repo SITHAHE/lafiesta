@@ -26,8 +26,8 @@ export default function Contacts() {
             Готовы устроить себе <span className="text-gradient">день красоты?</span>
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-grape-100/80">
-            Запишитесь онлайн за минуту — выберите удобное время в Telegram или напишите нам.
-            Мы ответим за 15 минут.
+            Запишитесь онлайн за минуту — выберите удобное время в Telegram или напишите нам.{' '}
+            <span className="whitespace-nowrap">Мы ответим за 15 минут.</span>
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <a href={bookingUrl} target="_blank" rel="noopener noreferrer" className="btn-primary w-full sm:w-auto">
